@@ -1,0 +1,36 @@
+## .NET / Visual Studio
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## Rider / JetBrains
+.idea/
+
+## VS Code
+.vscode/
+
+## appsettings with secrets (keep appsettings.json as a template, gitignore the real dev one)
+appsettings.Development.json
+appsettings.*.local.json
+
+## Environment files (if you move the SA password to .env)
+.env
+.env.*
+!.env.example
+
+## Docker
+docker-compose.override.yml
+
+## EF Core
+*.db
+*.sqlite
+
+## OS junk
+.DS_Store
+Thumbs.db
+
+## Logs
+*.log
+logs/
