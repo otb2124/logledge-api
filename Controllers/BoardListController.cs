@@ -9,7 +9,7 @@ using logledge_api.Models;
 namespace logledge_api.Controllers;
 
 [ApiController]
-[Route("api/boards/{boardId}/lists")]
+[Route("api/projects/{projectId}/lists")]
 [Authorize]
 public class BoardListsController : ControllerBase
 {
@@ -24,94 +24,65 @@ public class BoardListsController : ControllerBase
         User.FindFirst(ClaimTypes.NameIdentifier)?.Value
         ?? throw new UnauthorizedAccessException();
 
-    private async Task<Board?> GetOwnedBoard(int boardId) =>
-        await _context.Boards.FirstOrDefaultAsync(b => b.Id == boardId && b.OwnerId == CurrentUserId);
+    private async Task<Project?> GetMemberProject(string projectId) =>
+        await _context.Projects
+            .FirstOrDefaultAsync(p => p.Id == projectId && p.Members.Any(m => m.UserId == CurrentUserId));
 
-    // POST: api/boards/5/lists
     [HttpPost]
-    public async Task<ActionResult<BoardListDto>> CreateList(int boardId, CreateBoardListDto dto)
+    public async Task<ActionResult<BoardListDto>> CreateList(string projectId, CreateBoardListDto dto)
     {
-        var board = await GetOwnedBoard(boardId);
-        if (board == null) return NotFound(new { message = "Board not found." });
+        var project = await GetMemberProject(projectId);
+        if (project == null) return NotFound(new { message = "Project not found." });
 
-        if (string.IsNullOrWhiteSpace(dto.Name))
-            return BadRequest(new { message = "List name is required." });
+        if (string.IsNullOrWhiteSpace(dto.Title))
+            return BadRequest(new { message = "List title is required." });
 
         var maxPosition = await _context.BoardLists
-            .Where(l => l.BoardId == boardId)
+            .Where(l => l.ProjectId == projectId)
             .Select(l => (int?)l.Position)
             .MaxAsync() ?? -1;
 
         var list = new BoardList
         {
-            Name = dto.Name.Trim(),
-            BoardId = boardId,
+            Title = dto.Title.Trim(),
+            Description = dto.Description?.Trim(),
+            ProjectId = projectId,
             Position = maxPosition + 1
         };
 
         _context.BoardLists.Add(list);
         await _context.SaveChangesAsync();
 
-        return Ok(new BoardListDto { Id = list.Id, Name = list.Name, Position = list.Position });
+        return Ok(new BoardListDto { Id = list.Id, Title = list.Title, Description = list.Description, Position = list.Position });
     }
 
-    // PUT: api/boards/5/lists/3
     [HttpPut("{listId}")]
-    public async Task<IActionResult> UpdateList(int boardId, int listId, UpdateBoardListDto dto)
+    public async Task<IActionResult> UpdateList(string projectId, string listId, UpdateBoardListDto dto)
     {
-        var board = await GetOwnedBoard(boardId);
-        if (board == null) return NotFound();
+        var project = await GetMemberProject(projectId);
+        if (project == null) return NotFound();
 
-        var list = await _context.BoardLists.FirstOrDefaultAsync(l => l.Id == listId && l.BoardId == boardId);
+        var list = await _context.BoardLists.FirstOrDefaultAsync(l => l.Id == listId && l.ProjectId == projectId);
         if (list == null) return NotFound();
 
-        list.Name = dto.Name.Trim();
+        if (string.IsNullOrWhiteSpace(dto.Title))
+            return BadRequest(new { message = "List title is required." });
+
+        list.Title = dto.Title.Trim();
+        list.Description = dto.Description?.Trim();
         await _context.SaveChangesAsync();
 
         return NoContent();
     }
 
-    // PATCH: api/boards/5/lists/3/position
-    [HttpPatch("{listId}/position")]
-    public async Task<IActionResult> ReorderList(int boardId, int listId, ReorderBoardListDto dto)
-    {
-        var board = await GetOwnedBoard(boardId);
-        if (board == null) return NotFound();
-
-        var list = await _context.BoardLists.FirstOrDefaultAsync(l => l.Id == listId && l.BoardId == boardId);
-        if (list == null) return NotFound();
-
-        list.Position = dto.Position;
-        await _context.SaveChangesAsync();
-
-        return NoContent();
-    }
-
-    // DELETE: api/boards/5/lists/3
-    [HttpDelete("{listId}")]
-    public async Task<IActionResult> DeleteList(int boardId, int listId)
-    {
-        var board = await GetOwnedBoard(boardId);
-        if (board == null) return NotFound();
-
-        var list = await _context.BoardLists.FirstOrDefaultAsync(l => l.Id == listId && l.BoardId == boardId);
-        if (list == null) return NotFound();
-
-        _context.BoardLists.Remove(list); // cascades to its Tickets
-        await _context.SaveChangesAsync();
-
-        return NoContent();
-    }
-
-    // PATCH: api/boards/5/lists/reorder
     [HttpPatch("reorder")]
-    public async Task<IActionResult> ReorderLists(int boardId, ReorderBoardListsDto dto)
+    public async Task<IActionResult> ReorderLists(string projectId, ReorderBoardListsDto dto)
     {
-        var board = await GetOwnedBoard(boardId);
-        if (board == null) return NotFound();
+        var project = await GetMemberProject(projectId);
+        if (project == null) return NotFound();
 
         var lists = await _context.BoardLists
-            .Where(l => l.BoardId == boardId && dto.OrderedListIds.Contains(l.Id))
+            .Where(l => l.ProjectId == projectId && dto.OrderedListIds.Contains(l.Id))
             .ToListAsync();
 
         for (int i = 0; i < dto.OrderedListIds.Count; i++)
@@ -121,6 +92,21 @@ public class BoardListsController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpDelete("{listId}")]
+    public async Task<IActionResult> DeleteList(string projectId, string listId)
+    {
+        var project = await GetMemberProject(projectId);
+        if (project == null) return NotFound();
+
+        var list = await _context.BoardLists.FirstOrDefaultAsync(l => l.Id == listId && l.ProjectId == projectId);
+        if (list == null) return NotFound();
+
+        _context.BoardLists.Remove(list);
+        await _context.SaveChangesAsync();
+
         return NoContent();
     }
 }

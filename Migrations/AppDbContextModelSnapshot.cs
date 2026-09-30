@@ -181,6 +181,9 @@ namespace logledge_api.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime?>("LastOnlineAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -227,70 +230,157 @@ namespace logledge_api.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("logledge_api.Models.Board", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("OwnerId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OwnerId");
-
-                    b.ToTable("Boards");
-                });
-
             modelBuilder.Entity("logledge_api.Models.BoardList", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BoardId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
+                    b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Position")
                         .HasColumnType("int");
 
+                    b.Property<string>("ProjectId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("BoardId");
+                    b.HasIndex("ProjectId");
 
                     b.ToTable("BoardLists");
                 });
 
-            modelBuilder.Entity("logledge_api.Models.Ticket", b =>
+            modelBuilder.Entity("logledge_api.Models.Comment", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("AuthorId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReplyToCommentId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("TicketId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("ReplyToCommentId");
+
+                    b.HasIndex("TicketId");
+
+                    b.ToTable("Comments");
+                });
+
+            modelBuilder.Entity("logledge_api.Models.Label", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Color")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProjectId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("Labels");
+                });
+
+            modelBuilder.Entity("logledge_api.Models.Priority", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Icon")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Order")
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<string>("ProjectId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("Priorities");
+                });
+
+            modelBuilder.Entity("logledge_api.Models.Project", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("logledge_api.Models.ProjectMember", b =>
+                {
+                    b.Property<string>("ProjectId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("ProjectId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ProjectMembers");
+                });
+
+            modelBuilder.Entity("logledge_api.Models.Ticket", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("AssigneeId")
                         .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("BoardListId")
-                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -301,14 +391,37 @@ namespace logledge_api.Migrations
                     b.Property<DateTime?>("DueDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("ListId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ParentId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<int>("Position")
                         .HasColumnType("int");
 
-                    b.Property<string>("Priority")
+                    b.Property<string>("PriorityId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProjectId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ReporterId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("StoryPoints")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Title")
+                    b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -316,9 +429,58 @@ namespace logledge_api.Migrations
 
                     b.HasIndex("AssigneeId");
 
-                    b.HasIndex("BoardListId");
+                    b.HasIndex("ListId");
+
+                    b.HasIndex("ParentId");
+
+                    b.HasIndex("PriorityId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("ReporterId");
 
                     b.ToTable("Tickets");
+                });
+
+            modelBuilder.Entity("logledge_api.Models.TicketLabel", b =>
+                {
+                    b.Property<string>("TicketId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("LabelId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("TicketId", "LabelId");
+
+                    b.HasIndex("LabelId");
+
+                    b.ToTable("TicketLabels");
+                });
+
+            modelBuilder.Entity("logledge_api.Models.TicketLink", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("FromTicketId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ToTicketId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FromTicketId");
+
+                    b.HasIndex("ToTicketId");
+
+                    b.ToTable("TicketLinks");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -372,26 +534,82 @@ namespace logledge_api.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("logledge_api.Models.Board", b =>
-                {
-                    b.HasOne("logledge_api.Models.ApplicationUser", "Owner")
-                        .WithMany()
-                        .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Owner");
-                });
-
             modelBuilder.Entity("logledge_api.Models.BoardList", b =>
                 {
-                    b.HasOne("logledge_api.Models.Board", "Board")
+                    b.HasOne("logledge_api.Models.Project", "Project")
                         .WithMany("Lists")
-                        .HasForeignKey("BoardId")
+                        .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Board");
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("logledge_api.Models.Comment", b =>
+                {
+                    b.HasOne("logledge_api.Models.ApplicationUser", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("logledge_api.Models.Comment", "ReplyToComment")
+                        .WithMany()
+                        .HasForeignKey("ReplyToCommentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("logledge_api.Models.Ticket", "Ticket")
+                        .WithMany("Comments")
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+
+                    b.Navigation("ReplyToComment");
+
+                    b.Navigation("Ticket");
+                });
+
+            modelBuilder.Entity("logledge_api.Models.Label", b =>
+                {
+                    b.HasOne("logledge_api.Models.Project", "Project")
+                        .WithMany("Labels")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("logledge_api.Models.Priority", b =>
+                {
+                    b.HasOne("logledge_api.Models.Project", "Project")
+                        .WithMany("Priorities")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("logledge_api.Models.ProjectMember", b =>
+                {
+                    b.HasOne("logledge_api.Models.Project", "Project")
+                        .WithMany("Members")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("logledge_api.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("logledge_api.Models.Ticket", b =>
@@ -399,27 +617,120 @@ namespace logledge_api.Migrations
                     b.HasOne("logledge_api.Models.ApplicationUser", "Assignee")
                         .WithMany()
                         .HasForeignKey("AssigneeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("logledge_api.Models.BoardList", "List")
+                        .WithMany("Tickets")
+                        .HasForeignKey("ListId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("logledge_api.Models.Ticket", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("logledge_api.Models.Priority", "Priority")
+                        .WithMany()
+                        .HasForeignKey("PriorityId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("logledge_api.Models.BoardList", "BoardList")
+                    b.HasOne("logledge_api.Models.Project", "Project")
                         .WithMany("Tickets")
-                        .HasForeignKey("BoardListId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("logledge_api.Models.ApplicationUser", "Reporter")
+                        .WithMany()
+                        .HasForeignKey("ReporterId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Assignee");
 
-                    b.Navigation("BoardList");
+                    b.Navigation("List");
+
+                    b.Navigation("Parent");
+
+                    b.Navigation("Priority");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("Reporter");
                 });
 
-            modelBuilder.Entity("logledge_api.Models.Board", b =>
+            modelBuilder.Entity("logledge_api.Models.TicketLabel", b =>
                 {
-                    b.Navigation("Lists");
+                    b.HasOne("logledge_api.Models.Label", "Label")
+                        .WithMany("Tickets")
+                        .HasForeignKey("LabelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("logledge_api.Models.Ticket", "Ticket")
+                        .WithMany("Labels")
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Label");
+
+                    b.Navigation("Ticket");
+                });
+
+            modelBuilder.Entity("logledge_api.Models.TicketLink", b =>
+                {
+                    b.HasOne("logledge_api.Models.Ticket", "FromTicket")
+                        .WithMany("OutgoingLinks")
+                        .HasForeignKey("FromTicketId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("logledge_api.Models.Ticket", "ToTicket")
+                        .WithMany("IncomingLinks")
+                        .HasForeignKey("ToTicketId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FromTicket");
+
+                    b.Navigation("ToTicket");
                 });
 
             modelBuilder.Entity("logledge_api.Models.BoardList", b =>
                 {
                     b.Navigation("Tickets");
+                });
+
+            modelBuilder.Entity("logledge_api.Models.Label", b =>
+                {
+                    b.Navigation("Tickets");
+                });
+
+            modelBuilder.Entity("logledge_api.Models.Project", b =>
+                {
+                    b.Navigation("Labels");
+
+                    b.Navigation("Lists");
+
+                    b.Navigation("Members");
+
+                    b.Navigation("Priorities");
+
+                    b.Navigation("Tickets");
+                });
+
+            modelBuilder.Entity("logledge_api.Models.Ticket", b =>
+                {
+                    b.Navigation("Children");
+
+                    b.Navigation("Comments");
+
+                    b.Navigation("IncomingLinks");
+
+                    b.Navigation("Labels");
+
+                    b.Navigation("OutgoingLinks");
                 });
 #pragma warning restore 612, 618
         }
